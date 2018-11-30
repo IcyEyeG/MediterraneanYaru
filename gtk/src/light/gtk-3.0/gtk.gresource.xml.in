@@ -1,0 +1,11 @@
+<gresources>
+  <gresource prefix="/com/ubuntu/themes/MediterraneanYaru/3.0">
+    <file alias="gtk.css">gtk-generated.css</file>
+    <file alias="gtk-darkest-light.css">gtk-darkest-light-generated.css</file>
+    <file alias="gtk-dark.css">gtk-dark-generated.css</file>
+    <file alias="gtk-darkest-night.css">gtk-darkest-night-generated.css</file>
+    <file alias="gtk-night.css">gtk-night-generated.css</file>
+    <file alias="gtk-darkest.css">gtk-darkest-generated.css</file>
+    @ASSETS@
+  </gresource>
+</gresources>

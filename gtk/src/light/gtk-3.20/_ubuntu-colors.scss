@@ -1,0 +1,29 @@
+// Blacks
+$jet: #181818; //not important
+$inkstone: #383838; //Dark theme background
+$slate: #434343; //Disabled buttons on dark theme
+$graphite: #666666; //???
+
+// Whites
+$white: #FFFFFF;
+$porcelain: #F7F7F7; // Text for dark theme, background lists for light.
+$silk: #CECECE; // Menu text
+$ash: #878787; //Dark theme toggle inactivated
+
+// Utility
+$red: #ED3146;
+$mediterranean: #4D6E92; //Main Blue in Mediterranean themes
+$yellow: #F89B0F;
+$green: #53A704; //This green is for stepped progress bar in Mediterranean themes
+$blue: #4a90d9; //Link Blue in Mediterranean themes
+$purple: #762572;
+
+// Terminal colors
+$terminal_bg_color: #2A2A2A;
+$terminal_base_color: lighten($terminal_bg_color, 5%);
+$terminal_fg_color: white;
+$terminal_borders_color: darken($terminal_bg_color, 10%);
+
+// Headerbar Colors
+$headerbar_bg_color: #626262;
+$headerbar_bg_darkest: #383838;

@@ -1,0 +1,6 @@
+subdir('light')
+subdir('darkest-light')
+subdir('night')
+subdir('darkest-night')
+subdir('dark')
+subdir('darkest')
