@@ -17,7 +17,7 @@ This installation method is to try out the theme while developing it.
 
 ```bash
 # Download the repository from github
-git clone https://github.com/ubuntu/yaru.git
+git clone https://github.com/IcyEyeG/MediterraneanYaru.git
 cd yaru
 # Initialize build system (only required once per repo)
 meson build
