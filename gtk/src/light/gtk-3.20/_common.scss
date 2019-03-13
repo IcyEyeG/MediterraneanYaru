@@ -26,7 +26,7 @@
   // to the adwaita engine: using real CSS properties is faster,
   // and we don't use any outlines for now.
 
-  outline-color: $focus_color; // gtkalpha(currentColor, 0.3);
+  outline-color: gtkalpha(currentColor, 0.3);
   outline-style: dashed;
   outline-offset: -3px;
   outline-width: 1px;
@@ -41,7 +41,10 @@ $medium_radius: 6px;
 $large_radius: 12px;
 $backdrop_transition: all 200ms ease-out;
 $button_transition: all 0.4s ease-out;
-$popover_shadow: 0 2px 5px transparentize(black, 0.75);
+$menu_shadow: 0 1px 2px transparentize(black, 0.8);
+$popover_shadow: 0 2px 5px transparentize(black, 0.8);
+$window_border: if($variant == 'light', transparentize(black, 0.96), transparentize(black, 0.8));
+$menu_border: if($variant=='light', transparentize(black, 0.8), transparentize(white, 0.88));
 
 /***************
  * Base States *
@@ -129,7 +132,7 @@ widget:selected { color: $selected_fg_color; }
 textview {
   text {
     @extend %view;
-    selection { &:focus, & { @extend %selected_text; }}
+    selection { &:focus, & { @extend %selected_items; }}
   }
 }
 
@@ -183,7 +186,7 @@ label {
   &:selected { @extend %nobg_selected_items; }
 
   selection {
-    @extend %selected_text;
+    @extend %selected_items;
   }
   counter-label{background-color: $purple;}
 
@@ -198,7 +201,7 @@ label {
   &:backdrop {
     color: $backdrop_text_color;
 
-    selection { @extend %selected_text:backdrop; }
+    selection { @extend %selected_items:backdrop; }
   }
 }
 
@@ -321,7 +324,7 @@ entry {
     &:backdrop:disabled { @include entry(backdrop-insensitive); }
 
     selection {
-      @extend %selected_text;
+      @extend %selected_items;
     }
 
     // entry error and warning style
@@ -333,6 +336,8 @@ entry {
 
         &:focus { @include entry(focus, $e_color); }
 
+        &:not(:focus) { border-color: $borders_color; }
+        &:backdrop { border-color: $backdrop_borders_color; }
         selection { background-color: $e_color; }
       }
     }
@@ -382,7 +387,15 @@ entry {
   .linked:not(.vertical) > & { @extend %linked; }
   .linked:not(.vertical) > &:focus + &,
   .linked:not(.vertical) > &:focus + button,
-  .linked:not(.vertical) > &:focus + combobox > box > button.combo { transition: $button_transition; border-left-color: $focus_color; }
+  .linked:not(.vertical) > &:focus + combobox > box > button.combo { transition: $button_transition; border-left-color: entry_focus_border(); }
+
+  .linked:not(.vertical) > &:focus.error + &,
+  .linked:not(.vertical) > &:focus.error + button,
+  .linked:not(.vertical) > &:focus.error + combobox > box > button.combo { transition: $button_transition; border-left-color: entry_focus_border($error_color); }
+
+  .linked:not(.vertical) > &:focus.warning + &,
+  .linked:not(.vertical) > &:focus.warning + button,
+  .linked:not(.vertical) > &:focus.warning + combobox > box > button.combo { transition: $button_transition; border-left-color: entry_focus_border($warning_color); }
 
   .linked:not(.vertical) > &:drop(active) + &,
   .linked:not(.vertical) > &:drop(active) + button,
@@ -408,7 +421,13 @@ entry {
     // color back the top border of a linked focused entry following another entry.
     // :not(:only-child) is a specificity bump hack.
     + %entry:focus:not(:only-child),
-    + entry:focus:not(:only-child) { border-top-color: $focus_color; }
+    + entry:focus:not(:only-child) { border-top-color: entry_focus_border(); }
+
+    + %entry:focus.error:not(:only-child),
+    + entry:focus.error:not(:only-child) { border-top-color: entry_focus_border($error_color); }
+
+    + %entry:focus.warning:not(:only-child),
+    + entry:focus.warning:not(:only-child) { border-top-color: entry_focus_border($warning_color); }
 
     + %entry:drop(active):not(:only-child),
     + entry:drop(active):not(:only-child) { border-top-color: $drop_target_color; }
@@ -419,7 +438,21 @@ entry {
       + %entry,
       + entry,
       + button,
-      + combobox > box > button.combo { border-top-color: $focus_color; }
+      + combobox > box > button.combo { border-top-color: entry_focus_border(); }
+    }
+
+    &:focus.error:not(:only-child) {
+      + %entry,
+      + entry,
+      + button,
+      + combobox > box > button.combo { border-top-color: entry_focus_border($error_color); }
+    }
+
+    &:focus.warning:not(:only-child) {
+      + %entry,
+      + entry,
+      + button,
+      + combobox > box > button.combo { border-top-color: entry_focus_border($warning_color); }
     }
 
     &:drop(active):not(:only-child) {
@@ -454,7 +487,7 @@ treeview entry {
     background-image: none;
     background-color: $base_color;
 
-    &:focus { border-color: $focus_color; }
+    &:focus { border-color: $selected_bg_color; }
   }
 }
 
@@ -512,7 +545,6 @@ button {
     padding: 2px 6px;
     border: 1px solid;
     border-radius: $small_radius;
-    outline-color: $focus_color;
     outline-style: dashed;
     outline-offset: -3px;
     -gtk-outline-radius: $small_radius;
@@ -568,7 +600,7 @@ button {
         @include button(backdrop);
 
         transition: $backdrop_transition;
-        outline-color: $focus_color;
+        outline-color: gtkalpha(currentColor, 0.3);
         -gtk-icon-effect: none;
 
         &:active,
@@ -1062,6 +1094,20 @@ toolbar.inline-toolbar toolbutton:backdrop {
   }
 }
 
+%jet_popover_button {
+  background-color: transparent;
+  &.suggested-action:not(:disabled):not(:active):not(:hover) { background-color: $success_color; border-color: $success_color; }
+  &.destructive-action:not(:disabled):not(:active):not(:hover) { background-color: $destructive_color; border-color: $destructive_color; }
+  &, &:hover, &:active, &:checked { box-shadow: none; }
+  &:hover, &:checked:hover { background-color: lighten($inkstone, 2%); border-color: lighten($inkstone, 2%); }
+  &:checked { background-color: $inkstone; border-color: $inkstone; }
+  &:active, &:checked:active { background-color: lighten($inkstone, 5%) }
+  &:backdrop {
+    check, radio { background-color: transparent; }
+    &:hover { background-color: lighten($backdrop_menu_color, 2%); } 
+  }
+}
+
 /* menu buttons */
 modelbutton.flat,
 .menuitem.button.flat {
@@ -1447,8 +1493,8 @@ toolbar {
 
   button.flat {
     @each $state, $t, $is_flat in ("", "normal", true),
-                                  (":hover", "hover", false),
-                                  (":hover:backdrop", "backdrop-hover", false),
+                                  (":hover, &:hover:checked", "hover", false),
+                                  (":hover:backdrop, &:hover:backdrop:checked", "backdrop-hover", false),
                                   (":active, &:checked", "active", false),
                                   (":disabled", "insensitive", true),
                                   (":disabled:active, &:disabled:checked", "insensitive-active", false),
@@ -1498,6 +1544,7 @@ toolbar {
       margin-bottom: 1px;
     }
   }
+  toolitem > box.linked.horizontal button { margin: 0; }
 }
 
 //searchbar, location-bar & inline-toolbar
@@ -1547,7 +1594,8 @@ headerbar {
   border-color: transparentize(_border_color($headerbar_bg_color), 0.7);
   border-top-color: $inkstone;
   border-style: solid;
-  border-width: 1px 1px 0 1px;
+  border-width: 0;
+  border-top-width: 1px;
   border-radius: 0;
   background-color: $headerbar_bg_color;
   color: $headerbar_fg_color;
@@ -1585,7 +1633,7 @@ headerbar {
       &:backdrop { background-image: image(mix(darken($inkstone, 5%), $backdrop_headerbar_bg_color, 50%)); }
   }
 
-  ~ separator, separator {
+  ~ separator, separator, separator.sidebar {
     &, &.titlebutton {
      &.horizontal, &.vertical {
         & { background-image: image(mix($inkstone, $headerbar_bg_color, 50%)); }
@@ -1594,9 +1642,15 @@ headerbar {
     }
   }
 
-
-  &:not(:only-child):first-child { border-right-width: 0; }
-  &:not(:only-child):not(:first-child) { border-left-width: 0; };
+  // GNOME 3.32+ responsive design headerbar separators
+  separator, hdyleaflet separator {
+    &, &.sidebar {
+      &, &.vertical, &.horizontal {
+        border-color: mix($inkstone, $headerbar_bg_color, 50%);
+        &:backdrop { border-color: mix(darken($inkstone, 5%), $backdrop_headerbar_bg_color, 50%); }
+      }
+    }
+  }
 
   & {
     // style headerbar buttons and entries using the appropriate headerbar colors
@@ -1605,6 +1659,7 @@ headerbar {
 
     switch {
       @include switch(lighten($headerbar_bg_color, 25%));
+      &, &:backdrop { &, &:hover, &:checked, &:checked:hover { border-top-color: transparent; box-shadow: none; } }
     }
 
     entry, %dark_entry {
@@ -1620,20 +1675,6 @@ headerbar {
       image {
         color: $tc;
         &:hover { color: $backdrop_headerbar_text_color; }
-      }
-
-      // Sadly, we need a dedicated styling here because
-      // the $variant is independant from the headerbar bg
-      selection {
-        $_bg: darken($neutral_color, 10%);
-        $_c: $headerbar_fg_color;
-        background-color: $_bg;
-        color: $_c;
-
-        &:backdrop {
-          background-color: _backdrop_color($_bg);
-          color: _backdrop_color($_c);
-        }
       }
     }
 
@@ -1677,7 +1718,7 @@ headerbar {
                               (":backdrop:active, &:backdrop:checked", 'backdrop-active'),
                               (":backdrop:disabled", 'backdrop-insensitive'),
                               (":backdrop:disabled:active, &:backdrop:disabled:checked", 'backdrop-insensitive-active') {
-            &#{$state} { @include button($t, $b_color, white, $flat:true); }
+            &#{$state} { @include button($t, $b_color, white, $flat:true); &:not(:active) { border-color: $b_color; } }
           }
         }
       }
@@ -1704,41 +1745,6 @@ headerbar {
       &:not(:last-child) { margin-right: 4px; }
     }
 
-    %underline_focus_headerbar {
-      // underline_focus using the appropriate headerbar colors
-      // this is used for the stackswitcher and pathbar as there are pathbars NOT in the headerbar
-      @extend %underline_focus_effect;
-
-      // not using include button, since we don't need all the other styling
-      $c: $hb_pathbar_bg;
-      background-color: $c;
-      color: $headerbar_text_color;
-
-      &:hover {
-        box-shadow: inset 0 -2px transparentize($headerbar_text_color, 0.5);
-        &:backdrop { box-shadow: inset 0 -2px transparentize($headerbar_text_color, 0.7); }
-      }
-
-      &:active { box-shadow: inset 0 -2px $headerbar_text_color; }
-
-      &:checked {
-        color: $selected_fg_color;
-        box-shadow: inset 0 -2px $selected_bg_color;
-
-        &:hover { box-shadow: inset 0 -2px mix($selected_fg_color, $selected_bg_color, 10%); }
-      }
-
-      &:backdrop {
-        background-color: _backdrop_color($c);
-        color: $backdrop_headerbar_insensitive_color;
-
-        &:checked {
-          color: $backdrop_headerbar_fg_color;
-          box-shadow: inset 0 -2px _backdrop_color($selected_bg_color);
-        }
-      }
-    }
-
     .stack-switcher.linked button,
     buttonbox.linked button,
     buttonbox.linked button.text-button ~ button {
@@ -1751,19 +1757,6 @@ headerbar {
 
       &:backdrop {
         &, &:checked { border-color: lighten($inkstone, 3%); }
-      }
-    }
-
-    .path-bar.linked button {
-      background-color: transparent;
-      border-radius: 0;
-      &:checked, &checked:active { 
-        color: $headerbar_fg_color; 
-        font-weight: normal;
-      }
-
-      &.slider-button {
-        box-shadow: none;
       }
     }
   }
@@ -1884,6 +1877,9 @@ headerbar {
       }
     }
   }
+
+  // grey borders look fuzzy on dark backgrounds - thus cutting the border in headerbar
+  scale slider { &, &:disabled { border-color: transparent; } }
 }
 
 headerbar {
@@ -1984,29 +1980,46 @@ headerbar { // headerbar border rounding
   &, &:backdrop { box-shadow: inset 0 -2px transparent; }
 }
 
-.path-bar button {
-  @extend %underline_focus_effect;
-  background-color: $button_bg_color;
-  color: $insensitive_fg_color;
-  border-style: none;
+.path-bar button, .nautilus-path-bar button {  
+    &, &:dir(ltr), &:dir(rtl) {
+      &, &.text-button, &.image-button, &.image-button.text-button {  
+      @extend %underline_focus_effect;
+      background-color: transparent;
+      color: $insensitive_fg_color;
+      &:only-child, &:last-child {
+        &, &:hover { color: $headerbar_fg_color; }
+      }
+      border-style: none;
+      &, &:not(:first-child):not(:last-child), &:first-child, &:last-child { border-radius: 0; }
+      box-shadow: none;
 
-  &:hover { 
-    box-shadow: inset 0 -2px transparentize($insensitive_fg_color, 0.5); 
-    color: $insensitive_fg_color; 
-  }
-  
-  &:active { box-shadow: inset 0 -2px $insensitive_fg_color; }
+      &:hover { 
+        box-shadow: inset 0 -2px transparentize($insensitive_fg_color, 0.5);
+        background-color: transparent;
+        color: $insensitive_fg_color; 
+      }
+      
+      &:active { box-shadow: inset 0 -2px $insensitive_fg_color; }
 
-  &:checked, &:checked:active {
-    color: $fg_color;
-    &:hover { box-shadow: inset 0 -2px $insensitive_fg_color; }
-  }
+      &:checked, &:checked:active {
+        color: $headerbar_fg_color;
+        background-color: transparent;
+        &:hover { box-shadow: inset 0 -2px $insensitive_fg_color; }
+        &:hover, &:backdrop { background-color: transparent; }
+      }
 
-  &:backdrop {
-    background-color: $button_bg_color;
-    color: $backdrop_insensitive_color;
-    border-color: transparent;
-    box-shadow: inset 0 -2px transparent;
+      &:backdrop {
+        background-color: transparent;
+        color: $backdrop_insensitive_color;
+        border-color: transparent;
+        box-shadow: inset 0 -2px transparent;
+        &:hover { 
+          box-shadow: inset 0 -2px transparentize($insensitive_fg_color, 0.5); 
+          background-color: transparent;
+          color: $backdrop_insensitive_color;
+        }
+      }
+    }
   }
 
   &.text-button, &.image-button, & {
@@ -2113,9 +2126,9 @@ treeview.view {
 
     &:dir(rtl) { -gtk-icon-source: -gtk-icontheme('pan-end-symbolic-rtl'); }
 
-    color: $text_color;
+    color: lighten($text_color, 20%);
 
-    &:hover { color: lighten($text_color, 25%); }
+    &:hover { color: $text_color; }
 
     &:selected {
       color: mix($selected_fg_color, $selected_bg_color, 70%);
@@ -2221,7 +2234,7 @@ menubar,
   background-color: $menubar_bg_color;
   border-color: transparentize($_border_color, 0.8);
   border-style: solid;
-  border-width: 0 1px;
+  border-width: 0px;
   box-shadow: inset 0 -1px transparentize($_border_color, 0.8);
   color: $headerbar_text_color;
   padding: 0px;
@@ -2266,7 +2279,7 @@ menu,
   padding: 8px 0;
   background-color: $menu_color;
   color: $text_color;
-  border: 1px solid $borders_color; // adds borders in a non composited env
+  border: 1px solid $menu_border;
   border-radius: $small_radius;
 
   .csd & { border: none; }  // axes borders in a composited env
@@ -2274,7 +2287,8 @@ menu,
   &:backdrop { background-color: $backdrop_menu_color;  color: $backdrop_text_color; }
 
   menuitem {
-    transition: all 100ms $ease-out-quad;
+    // a transition here causes no visible bg change for some popovers
+    // transition: all 100ms $ease-out-quad; 
     min-height: 16px;
     min-width: 36px;
     padding: 5px 6px;
@@ -2342,6 +2356,7 @@ menu,
       border-color: transparent ;
     }
   }
+  @if $variant=='dark' { separator { background-color: lighten($menu_color, 6%); } }
 }
 
 menuitem {
@@ -2366,7 +2381,10 @@ popover.background {
   border-radius: $medium_radius;
   background-color: $menu_color;
 
-  .csd &, & { border: 1px solid $borders_color; }
+  .csd &, & {
+    border: 1px solid if($variant=='light', transparentize(black,0.75), transparentize(white, 0.8));
+    &:backdrop { @if $variant=='light' { border-color: $backdrop_borders_color; } }
+  }
 
   box-shadow: $popover_shadow;
 
@@ -2409,6 +2427,15 @@ popover.background {
   radiobutton radio, checkbutton check {
     &:dir(ltr) { margin-right: 3px; }
     &:dir(rtl) { margin-left: 3px; }
+  }
+
+  @if $variant=='dark' {
+    *:not(fill):not(highlight):not(trough):not(slider):not(switch):not(selection) { background-color: transparent; }
+    separator { background-image: image(darken($menu_border,13%)); }
+    scrollbar slider { background-color: $scrollbar_slider_color; }
+    entry:not(:focus), button { border-color: darken($inkstone,1%); &:backdrop { border-color: lighten($inkstone,5%); } }
+    button, button.circular, button.flat, button.text-button, modelbutton { @extend %jet_popover_button; }
+    switch { @include switch($dark_fill, $success_color); }
   }
 }
 
@@ -2577,7 +2604,6 @@ notebook {
 
       &:checked {
         color: $fg_color;
-        font-weight: 500;
         background-color: $base_color;
         border-color: $_borders_color;
         & label {padding-bottom: 1px};
@@ -2958,22 +2984,27 @@ radio {
   }
 }
 
+
 %check,
 check {
   border-radius: 3px;
 
-  &:checked { -gtk-icon-source: -gtk-recolor(url("assets/check-symbolic.symbolic.png")); }
+  &:checked { -gtk-icon-source: image(-gtk-recolor(url("assets/check-symbolic.svg")),
+                                      -gtk-recolor(url("assets/check-symbolic.symbolic.png"))); }
 
-  &:indeterminate { -gtk-icon-source: -gtk-recolor(url("assets/dash-symbolic.symbolic.png")); }
+  &:indeterminate { -gtk-icon-source: image(-gtk-recolor(url("assets/dash-symbolic.svg")),
+                                            -gtk-recolor(url("assets/dash-symbolic.symbolic.png"))); }
 }
 
 %radio,
 radio {
   border-radius: 100%;
 
-  &:checked { -gtk-icon-source: -gtk-recolor(url("assets/bullet-symbolic.symbolic.png")); }
+  &:checked { -gtk-icon-source: image(-gtk-recolor(url("assets/bullet-symbolic.svg")),
+                                      -gtk-recolor(url("assets/bullet-symbolic.symbolic.png"))); }
 
-  &:indeterminate { -gtk-icon-source: -gtk-recolor(url("assets/dash-symbolic.symbolic.png")); }
+  &:indeterminate { -gtk-icon-source: image(-gtk-recolor(url("assets/dash-symbolic.svg")),
+                                            -gtk-recolor(url("assets/dash-symbolic.symbolic.png"))); }
 }
 
 
@@ -3728,7 +3759,7 @@ row {
   transition: all 150ms $ease-out-quad;
 
   &:not(:selected) {
-    outline-color: $focus_color;
+    outline-color: gtkalpha(currentColor, 0.3);
     &:not(:backdrop):hover { background-color: $base_hover_color; }
     &:not(:backdrop):active { background-color: $base_active_color; }
   }
@@ -3762,7 +3793,7 @@ row {
   color: $text_color;
   border-radius: $medium_radius;
   background-color: $menu_color;
-  border: 1px solid $borders_color;
+  border: 1px solid $menu_border;
   box-shadow: $popover_shadow;
 
   &:backdrop {
@@ -3772,9 +3803,9 @@ row {
     transition: $backdrop_transition;
   }
 
-  button.flat:hover {
-      @include button(hover, $menu_color);
-      border-color: $borders_color;
+  @if $variant=='dark' { 
+    box button, button.flat, button.text-button { @extend %jet_popover_button; } 
+    button.flat { border-color: transparent; } 
   }
 
   border { border: none; }
@@ -3897,7 +3928,6 @@ filechooser {
 
   #pathbarbox {
     $_bg: $bg_color;
-
     background: $_bg;
     border-bottom: 1px solid $borders_color;
     &:backdrop { background: if($variant==light, darken($backdrop_bg_color, 5%), $backdrop_bg_color);}
@@ -3910,6 +3940,10 @@ filechooser {
         background: transparent;
         label { color: $backdrop_text_color; }
       }
+    }
+    .slider-button { 
+      &:first-child { border-radius: $small_radius 0 0 $small_radius; }
+      &:last-child { border-radius: 0 $small_radius $small_radius  0; }
     }
   }
 
@@ -4200,23 +4234,12 @@ paned {
                   ('.error', $error_color) {
     &#{$t} {
       background-color: $c;
-      color: white;
-      border-bottom: 1px solid $borders_color;
-      selection { @extend %selected_text; }
-    }
-  }
-  button.close { color: white; &:backdrop { color: transparentize(white, 0.3); } }
-  > revealer > box > box label:backdrop { color: transparentize(white, 0.3); }
-  &:not(.warning):not(.error) {
-    > revealer > box > box label {
       color: $text_color;
-      &:backdrop { color: $backdrop_text_color; }
-    }
-    &:backdrop {
-      background-color: $backdrop_bg_color;
+      border-bottom: 1px solid $borders_color;
+      selection { @extend %selected_items; }
     }
   }
-  *:link { @extend %link_selected; }
+  *:link:selected { @extend %link_selected; }
 }
 
 /************
@@ -4390,12 +4413,9 @@ decoration {
   // lamefun trick to get rounded borders regardless of CSD use
   border-width: 0px;
 
-  // this needs to be transparent
-  // see bug #722563
-  $_wm_border: if($variant == 'light',transparentize(black, 0.77),transparentize(black, 0.5));
-
   $window_decoration_shadow: 0 3px 9px 1px;
-  box-shadow: $window_decoration_shadow transparentize(black, 0.5);
+  box-shadow: 0 3px 9px 1px transparentize(black, 0.5),
+              0 0 0 1px $window_border; //doing borders with box-shadow
 
   // FIXME rationalize shadows
 
@@ -4423,13 +4443,13 @@ decoration {
   .popup & { box-shadow: none; }
 
   // server-side decorations as used by mutter
-  .ssd & { box-shadow: none; }
-
+  //just doing borders, wm draws actual shadows
+  .ssd & { box-shadow: 0 0 0 1px $window_border; }
   //These shadows are applied to the context-menu!
   .csd.popup & {
-    border-radius: $small_radius;
-    box-shadow: $popover_shadow,
-                0 0 0 1px transparentize($borders_color, 0.2);
+    border-radius: $small_radius;    
+    box-shadow: $menu_shadow,
+                0 0 0 1px $menu_border;
   }
 
   tooltip.csd & {
@@ -4515,22 +4535,6 @@ button.titlebutton {
   }
 }
 
-%selected_text {
-  $c: $text_selection;
-  $tc: $text_color;
-  background-color: $c;
-  color: $tc;
-
-  &:disabled { color: mix($tc, $c, 50%); }
-
-  &:backdrop {
-    background-color: _backdrop_color($c);
-    color: $backdrop_text_color;
-
-    &:disabled { color: mix($backdrop_selected_fg_color, $c, 30%); }
-  }
-}
-
 .monospace { font-family: monospace; }
 
 
@@ -4563,7 +4567,11 @@ cursor-handle {
 
     &.insertion-cursor#{$s}:dir(ltr), &.insertion-cursor#{$s}:dir(rtl) {
       $_url: 'assets/slider-horz-scale-has-marks-above#{$as}#{$asset_suffix}';
-      -gtk-icon-source: -gtk-scaled(url('#{$_url}.png'),
+      -gtk-icon-source: none;
+      background-repeat: no-repeat;
+      background-size: 16px 24px;
+      background-position: center -2px;
+      background-image: -gtk-scaled(url('#{$_url}.png'),
                                     url('#{$_url}@2.png'));
     }
   }
