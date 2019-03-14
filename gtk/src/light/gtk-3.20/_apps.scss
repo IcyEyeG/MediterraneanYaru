@@ -628,7 +628,7 @@ UnityDecoration {
   -UnityDecoration-inactive-shadow-radius: 7px;
 
   -UnityDecoration-glow-size: 10px;
-  -UnityDecoration-glow-color: $focus_color;
+  -UnityDecoration-glow-color: $mediterranean;
 
   -UnityDecoration-title-indent: 10px;
   -UnityDecoration-title-fade: 35px;
@@ -674,7 +674,7 @@ UnityPanelWidget,
 .unity-panel.menubar .menuitem *:hover {
   border-radius: 0;
   color: $selected_fg_color;
-  background-image: _solid($focus_color);
+  background-image: _solid($mediterranean);
   border-bottom: none;
 }
 
@@ -691,5 +691,5 @@ UnityPanelWidget,
 .menu IdoPlaybackMenuItem.menuitem:active {
   -gtk-icon-source: -gtk-icontheme("process-working-symbolic");
   animation: playbackmenuitem_spinner 1s infinite linear;
-  color: $focus_color;
+  color: $mediterranean;
 }
